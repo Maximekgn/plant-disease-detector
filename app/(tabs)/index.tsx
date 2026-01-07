@@ -45,8 +45,7 @@ export default function DroneVisionScreen() {
   const [cameraState, setCameraState] = useState<CameraReadyState>("streaming"); // Auto start
   const cameraRef = useRef<CameraView>(null);
   
-  const scanLineAnim = useRef(new Animated.Value(0)).current;
-  const alertOpacity = useRef(new Animated.Value(0)).current;
+
 
   const {
     status: wsStatus,
@@ -59,46 +58,7 @@ export default function DroneVisionScreen() {
 
   const [lastFrameAt, setLastFrameAt] = useState<number | null>(null);
 
-  // Animation de scan
-  useEffect(() => {
-    if (cameraState === "streaming") {
-      const scanLoop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(scanLineAnim, {
-            toValue: height,
-            duration: 2000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scanLineAnim, {
-            toValue: 0,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      scanLoop.start();
-      return () => scanLoop.stop();
-    }
-  }, [cameraState]);
 
-  // Animation d'alerte
-  useEffect(() => {
-    if (lastPrediction) {
-      Animated.timing(alertOpacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => {
-        setTimeout(() => {
-          Animated.timing(alertOpacity, {
-            toValue: 0,
-            duration: 1500,
-            useNativeDriver: true,
-          }).start();
-        }, 2000);
-      });
-    }
-  }, [lastPrediction]);
 
   // Capture Loop Optimisée
   useEffect(() => {
@@ -176,6 +136,7 @@ export default function DroneVisionScreen() {
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         facing="back"
+        flash="off"
         onCameraReady={() => setCameraState("streaming")}
       />
 
@@ -211,20 +172,12 @@ export default function DroneVisionScreen() {
           <View style={styles.centerCrossV} />
           <View style={styles.centerCrossH} />
 
-          <Animated.View 
-            style={[
-              styles.scanLine, 
-              { 
-                top: 0,
-                transform: [{ translateY: scanLineAnim }] 
-              }
-            ]} 
-          />
+
         </View>
 
-        {/* Alerte Détection */}
+        {/* Alerte Détection - Static (No Flash) */}
         {plantInfo && (
-          <Animated.View style={[styles.alertBox, { opacity: alertOpacity, borderColor: hudColor }]}>
+          <View style={[styles.alertBox, { borderColor: hudColor }]}>
             <View style={[styles.alertBadge, { backgroundColor: hudColor }]}>
               <Text style={styles.alertIcon}>{isHealthy ? "✓" : "!"}</Text>
             </View>
@@ -241,7 +194,7 @@ export default function DroneVisionScreen() {
                 CONFIDENCE: {scorePct}%
               </Text>
             </View>
-          </Animated.View>
+          </View>
         )}
 
         {/* Footer Contrôles */}
